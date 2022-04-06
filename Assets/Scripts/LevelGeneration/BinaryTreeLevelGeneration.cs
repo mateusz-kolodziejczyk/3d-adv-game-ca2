@@ -2,10 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+enum Direction{
+    NORTH,
+    SOUTH,
+    EAST,
+    WEST,
+    NONE,
+}
 public class BinaryTreeLevelGeneration : MonoBehaviour
 {
-    const int NORTH = 1, SOUTH = 2, EAST = 3, WEST = 4;
-    int[,] grid;
+    Direction[,] grid;
+
+    Dictionary<Vector2Int, Dictionary<Direction, GameObject>> dictGrid;
 
     [SerializeField]
     [Range(5, 100)]
@@ -24,7 +32,7 @@ public class BinaryTreeLevelGeneration : MonoBehaviour
         height = width;
         wallHeight = 4;
 
-        grid = new int[width, height];
+        grid = new Direction[width, height];
         gridObjectVer = new GameObject[width + 1, height + 1];
         gridObjectHor = new GameObject[width + 1, height + 1];
         drawFullGrid();
@@ -73,49 +81,82 @@ public class BinaryTreeLevelGeneration : MonoBehaviour
         }
     }
 
+    void DrawFullGridDict(){
+        for(int r = 0; r < width; r++){
+            for(int c = 0; c < height; c++){
+                // Go through each direction separately once
+                var directionAdditions = new Dictionary<Direction, Vector2Int> (){
+                    {Direction.NORTH, new Vector2Int(1,0)},
+                    {Direction.EAST, new Vector2Int(0,)},
+                    {Direction.SOUTH, new Vector2Int(1,0)},
+                    {Direction.WEST, new Vector2Int(1,0)},
+                };
+            }
+        }
+    }
+
     void DisplayGrid()
     {
         for (int row = 0; row < height; row++)
         {
             for (int col = 0; col < width; col++)
             {
-                if (grid[col,row] == NORTH) gridObjectHor[col, row + 1].active = false;
-                if (grid[col, row] == EAST) gridObjectVer[col, row + 1].active = false;
+                if (grid[col,row] == Direction.NORTH) {
+                    gridObjectVer[col, row].active = false;
+                }
+                if (grid[col, row] == Direction.WEST) {
+                    gridObjectHor[col, row].active = false;
+                }
             }
         }
     }
 
     void GenerateMazeBinary()
     {
+
         for (int row = 0; row < height; row++)
         {
             for (int col = 0; col < width; col++)
             {
-                int carvingDir;
+                var usableDirections = new List<Direction>{Direction.WEST, Direction.NORTH};
+            
                 float randomNum = Random.Range(0, 100);
-                if (randomNum > 30)
-                    carvingDir = NORTH;
-                else
-                    carvingDir = EAST;
+                var index = randomNum > 50 ? 0 : 1;
+                var direction = usableDirections[index];
 
-                if (col == width - 1)
-                {
-                    carvingDir = NORTH;
-
-                    if (row < height -1)
-                        carvingDir = NORTH;
-                    else
-                        carvingDir = WEST;
+                var offset = new Vector2Int(0,0);
+                switch(direction){
+                    case Direction.NORTH:
+                        offset.y = 1;
+                        break;
+                    case Direction.WEST:
+                        offset.x = 1;
+                        break;
+                    default:
+                    break;
                 }
+                if(offset.x+col >= width || offset.y+row >= height ){
+                    index = index == 0 ? 1 : 0;
+                    direction = usableDirections[index];
+                    offset = new Vector2Int(0,0);
+                    switch(direction){
+                        case Direction.NORTH:
+                            offset.y = 1;
+                            break;
+                        case Direction.WEST:
+                            offset.x = 1;
+                            break;
+                        default:
+                            break;
+                    }
+                    if(offset.x+col >= width || offset.y+row >= height){
+                        direction = Direction.NONE;
+                    }
 
-                else if (row == height - 1)
-                {
-                    if (col < width - 1)
-                        carvingDir = EAST;
-                    else
-                        carvingDir = -1;
                 }
-                grid[col, row] = carvingDir;
+                Debug.Log(direction);
+                grid[col, row] = direction;
+
             }
         }
     }
