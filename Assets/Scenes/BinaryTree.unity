@@ -515,13 +515,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1982361036}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e96b298d13fc4a0d85d52ce0b13b2ef, type: 3}
+  m_Script: {fileID: 11500000, guid: 40232ae2fbea64dc295ff1301b2fb89a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 11
-  height: 15
+  width: 5
+  height: 5
   wallSize: 5
-  verticalWall: {fileID: 181555769710686248, guid: b178cfbea0d39431fa1b4d7893e75c44, type: 3}
+  verticalWall: {fileID: 4838974931702610211, guid: 55bacfbb999374fd4910970456819b97, type: 3}
   horizontalWall: {fileID: 4838974931702610211, guid: 55bacfbb999374fd4910970456819b97, type: 3}
 --- !u!4 &1982361038
 Transform:
