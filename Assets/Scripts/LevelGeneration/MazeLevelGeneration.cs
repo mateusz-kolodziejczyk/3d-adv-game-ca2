@@ -1,8 +1,13 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
-enum Direction{
+internal enum Direction{
     NORTH,
     SOUTH,
     EAST,
@@ -11,158 +16,147 @@ enum Direction{
 }
 public class MazeLevelGeneration : MonoBehaviour
 {
-    Dictionary<Direction,Vector2Int> directionAdditions = new Dictionary<Direction, Vector2Int> (){
-                    {Direction.NORTH, new Vector2Int(0,-1)},
-                    {Direction.EAST, new Vector2Int(1,0)},
-                    {Direction.SOUTH, new Vector2Int(0,1)},
-                    {Direction.WEST, new Vector2Int(-1,0)},
-                    {Direction.NONE, new Vector2Int(0,0)}
+    private readonly Dictionary<Direction,Vector2Int> directionAdditions = new(){
+                    {Direction.NORTH, new(0,-1)},
+                    {Direction.EAST, new(1,0)},
+                    {Direction.SOUTH, new(0,1)},
+                    {Direction.WEST, new(-1,0)},
+                    {Direction.NONE, new(0,0)}
                 };
-    Direction[,] grid;
+
+    private Direction[,] grid;
     
 
     // For Kruskal
-    Dictionary<Vector2Int, HashSet<Direction>> removedEdges = new Dictionary<Vector2Int, HashSet<Direction>>();
-    Dictionary<(Vector2Int, Vector2Int), GameObject> walls = new Dictionary<(Vector2Int, Vector2Int), GameObject>();
+    private Dictionary<Vector2Int, HashSet<Direction>> removedEdges = new();
+    private Dictionary<(Vector2Int origin, Vector2Int destination), GameObject> walls = new();
 
-    Queue<(Vector2Int, Vector2Int)> edgesToCheck = new Queue<(Vector2Int, Vector2Int)>();
+    private Queue<(Vector2Int origin, Vector2Int destination)> edgesToCheck = new();
 
-    Dictionary<Vector2Int, System.Guid> cellGroups = new Dictionary<Vector2Int, System.Guid>();
-    
+    private Dictionary<Vector2Int, Guid> cellGroups = new();
 
-    [SerializeField]
-    [Range(5, 100)]
-    int width, height, wallSize;
+    private Dictionary<Guid, HashSet<Vector2Int>> sets = new();
 
     [SerializeField]
-    GameObject verticalWall, horizontalWall;
+    [Range(2, 100)]
+    private int width, height, wallSize;
 
-    GameObject[,] gridObjectHor, gridObjectVer;
-    GameObject[] allObjectsInScene;
+    [SerializeField] private GameObject verticalWall, horizontalWall;
 
-    float wallHeight; 
+    private GameObject[,] gridObjectHor, gridObjectVer;
+    private GameObject[] allObjectsInScene;
+
+    [SerializeField] [Range(1, 50)] private int wallHeight; 
 
     private void Init()
     {
-        height = width;
-        wallHeight = 4;
-
         grid = new Direction[width, height];
         gridObjectVer = new GameObject[width + 1, height + 1];
         gridObjectHor = new GameObject[width + 1, height + 1];
-        drawFullGrid();
+        DrawFullGrid();
         var ceiling = GameObject.FindWithTag("Ceiling");
         var floor = GameObject.FindWithTag("Floor");
+        
+        var xScale = (height + 1) * wallSize;
+        var zScale = (width + 1) * wallSize;
+        
+        floor.transform.localScale = new(xScale, floor.transform.localScale.y, zScale);
+        ceiling.transform.localScale = new(xScale, ceiling.transform.localScale.y, zScale);
+        
+        var xPosition = (height * wallSize)/2f + 2.5f;
+        var zPosition =  (width * wallSize)/2f + 2.5f;
+        
+        ceiling.transform.position = new(xPosition, wallHeight, zPosition);
+        ceiling.SetActive(false);
 
-        floor.transform.localScale = new Vector3((width + 1) * wallSize, floor.transform.localScale.y, (height + 1) * wallSize);
-        ceiling.transform.localScale = new Vector3((width + 1) * wallSize, ceiling.transform.localScale.y, (height + 1) * wallSize);
-
-        ceiling.transform.position = new Vector3(ceiling.transform.position.x, wallSize - 1, ceiling.transform.position.z);
-        ceiling.active = false;
+        floor.transform.position = new(xPosition, 0, zPosition);
     }
 
-    async void drawFullGrid() {
+    private void DrawFullGrid() {
 
         for (int r = 0; r < height; r++)
         {
             for (int c = 0; c < width; c++)
             {
-                // if (i < height)
-                // {
-                //     float vWallSize = wallSize;
-                //     float xOffset, zOffset;
-
-                //     xOffset = -(width * vWallSize) / 2;
-                //     zOffset = -(height * vWallSize) / 2;
-
-                //     gridObjectVer[j, i] = Instantiate(verticalWall, new Vector3(-vWallSize / 2 + j * vWallSize + xOffset, wallSize / 2, i * vWallSize + zOffset), Quaternion.identity);
-                //     gridObjectVer[j, i].transform.localScale = new Vector3(.1f, wallHeight, vWallSize);
-                    
-                //     gridObjectVer[j, i].active = true;
-
-                // }
-
-                // if (j < width)
-                // {
-                //     float hWallSize = wallSize;
-                //     float xOffset, zOffset;
-                //     xOffset = -(width * hWallSize) / 2;
-                //     zOffset = -(height * hWallSize) / 2;
-
-                //     gridObjectHor[j, i] = Instantiate(horizontalWall, new Vector3(j * hWallSize + xOffset, wallSize / 2, -(hWallSize / 2) + i * hWallSize + zOffset), Quaternion.identity);
-                //     gridObjectHor[j, i].transform.localScale = new Vector3(hWallSize, wallHeight, .1f);
-
-                //     gridObjectHor[j, i].active = true;
-                // }
-
                 // Creation algorithm steps
                 // Start at first cell
                 var cell = new Vector2Int(c, r);
                 // Add it to the various collections
                 // Add to set with uuid
-                cellGroups[cell] = System.Guid.NewGuid();
+                var guid = Guid.NewGuid();
+                cellGroups[cell] = guid;
+                sets[guid] = new() {cell};
                 // Go through each adjacent cell
-                foreach(var direction in (Direction[]) System.Enum.GetValues(typeof(Direction))){
+                foreach(var direction in (Direction[]) Enum.GetValues(typeof(Direction))){
+                    
                     if(direction == Direction.NONE){
                         continue;
                     }
 
                     var toAdd = directionAdditions[direction];
                     var adjacentCell = new Vector2Int(toAdd.x + c, toAdd.y + r);
+                    
                     // If has been added, continue;
-                    if(cellGroups.TryGetValue(adjacentCell, out System.Guid value)){
+                    // This makes sure that edges are not duplicated
+                    if(cellGroups.TryGetValue(adjacentCell, out _)){
                         continue;
                     }
 
-                    var pos = new Vector3(r * wallSize, (float)wallSize / 2, c * wallSize);
+                    // Add the set of edges to "edges to check"
+                    (Vector2Int origin, Vector2Int destination) edge = (cell, adjacentCell);
+                    
+                    // The edgesToCheck queue can contain edges on the maze wall as the algorithm will be trying to join two sets.
+                    // As walls on the outside have only one adjacent cell, this is impossible.
+                    
+                    edgesToCheck.Enqueue(edge);
+                    var pos = new Vector3(r * wallSize, (float)wallHeight / 2, c * wallSize);
                     var localScale = new Vector3(wallSize, wallHeight, wallSize);
 
                     // Instantiate new wall, making sure its oriented properly by a switch statement
                     switch(direction){
                         case Direction.WEST:
-                            pos.x = pos.x + (float)wallSize / 2;
+                            pos.x += (float)wallSize / 2;
                             localScale.z = .1f;
                             break;
                         case Direction.EAST:
-                            pos.x = pos.x + (float)wallSize / 2;
-                            pos.z = pos.z + wallSize;
+                            pos.x += (float)wallSize / 2;
+                            pos.z += wallSize;
                             localScale.z = .1f;
                             break;
                         case Direction.SOUTH:
-                            pos.z = pos.z + (float)wallSize / 2;
-                            pos.x = pos.x + wallSize;
+                            pos.z += (float)wallSize / 2;
+                            pos.x += wallSize;
                             localScale.x = .1f;
                             break;
                         case Direction.NORTH:
-                            pos.z = pos.z + (float)wallSize / 2;
+                            pos.z += (float)wallSize / 2;
                             localScale.x = .1f;
                             break;
                         default:
                             break;
                     }
+                    
                     var w = Instantiate(verticalWall, pos, Quaternion.identity);
                     w.transform.localScale = localScale;
-                    w.active = true;
+                    w.SetActive(true);
+                    walls[edge] = w;
                 }
-                // Calculate offset for walls
-
-                // Do not all adjacent cells if they have already been added(as the edge has already been added)
             }
         }
     }
 
-    void DrawFullGridDict(){
+    private void DrawFullGridDict(){
         for(int r = 0; r < width; r++){
             for(int c = 0; c < height; c++){
                 // Go through each direction separately once
-                foreach(var direction in System.Enum.GetValues(typeof(Direction))){
+                foreach(var direction in Enum.GetValues(typeof(Direction))){
 
                 }
             }
         }
     }
 
-    void DisplayGrid()
+    private void DisplayGrid()
     {
         for (int row = 0; row < height; row++)
         {
@@ -178,7 +172,7 @@ public class MazeLevelGeneration : MonoBehaviour
         }
     }
 
-    void GenerateMazeBinary()
+    private void GenerateMazeBinary()
     {
 
         for (int row = 0; row < height; row++)
@@ -205,7 +199,7 @@ public class MazeLevelGeneration : MonoBehaviour
                 if(offset.x+col >= width || offset.y+row >= height ){
                     index = index == 0 ? 1 : 0;
                     direction = usableDirections[index];
-                    offset = new Vector2Int(0,0);
+                    offset = new(0,0);
                     switch(direction){
                         case Direction.NORTH:
                             offset.y = 1;
@@ -228,17 +222,66 @@ public class MazeLevelGeneration : MonoBehaviour
         }
     }
 
-    private void GenerateMazeKruskal(){
+    private void GenerateMazeKruskal()
+    {
+        edgesToCheck = RandomiseQueue(edgesToCheck);
+        while (edgesToCheck.Count > 0)
+        {
+            Debug.Log(edgesToCheck.Count);
+            // Get next edge
+            var (origin, destination) = edgesToCheck.Dequeue();
+            
+            // Check if the two cellgroup entries actually exist;
+            if (!cellGroups.TryGetValue(origin, out var firstGroup)) continue;
+            if (!cellGroups.TryGetValue(destination, out var secondGroup)) continue;
+            
+            // Check if they are in the same set
+            if (firstGroup == secondGroup) continue;
 
+            // If the edges pass all the checks, remove the wall and combine the sets.
+            RemoveWall((origin, destination));
+            sets[firstGroup].UnionWith(sets[secondGroup]);
+            
+            // Set the cellgroups on all the secondgroup elements to the first group    
+            var secondSet = sets[secondGroup];
+            
+            foreach (var cell in secondSet)
+            {
+                if (cellGroups.TryGetValue(cell, out var _))
+                {
+                    cellGroups[cell] = firstGroup;
+                }
+            }
+            
+            // Remove the second set
+            sets.Remove(secondGroup);
+        }
+        Debug.Log("Loop has been run");
+        Debug.Log($"No. Sets: {sets.Values.Count}");
     }
-    void Start()
+
+    private void RemoveWall((Vector2Int origin, Vector2Int destination) edge)
+    {
+        if (walls.TryGetValue(edge, out var wall))
+        {
+            wall.SetActive(false);
+        }
+    }
+
+    private Queue<T> RandomiseQueue<T>(Queue<T> queue)
+    {
+        return new (queue.ToList().OrderBy(_ => Guid.NewGuid()));
+    }
+
+    private void Start()
     {
         Init();
+        GenerateMazeKruskal();
         //GenerateMazeBinary();
         //DisplayGrid();
     }
 
-    void Update()
+    private void Update()
     {
         
     }
