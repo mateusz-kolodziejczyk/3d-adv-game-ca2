@@ -8,20 +8,20 @@ using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 internal enum Direction{
-    NORTH,
-    SOUTH,
-    EAST,
-    WEST,
-    NONE,
+    North,
+    South,
+    East,
+    West,
+    None,
 }
 public class MazeLevelGeneration : MonoBehaviour
 {
     private readonly Dictionary<Direction,Vector2Int> directionAdditions = new(){
-                    {Direction.NORTH, new(0,-1)},
-                    {Direction.EAST, new(1,0)},
-                    {Direction.SOUTH, new(0,1)},
-                    {Direction.WEST, new(-1,0)},
-                    {Direction.NONE, new(0,0)}
+                    {Direction.North, new(0,-1)},
+                    {Direction.East, new(1,0)},
+                    {Direction.South, new(0,1)},
+                    {Direction.West, new(-1,0)},
+                    {Direction.None, new(0,0)}
                 };
 
     private Direction[,] grid;
@@ -89,7 +89,7 @@ public class MazeLevelGeneration : MonoBehaviour
                 // Go through each adjacent cell
                 foreach(var direction in (Direction[]) Enum.GetValues(typeof(Direction))){
                     
-                    if(direction == Direction.NONE){
+                    if(direction == Direction.None){
                         continue;
                     }
 
@@ -114,21 +114,21 @@ public class MazeLevelGeneration : MonoBehaviour
 
                     // Instantiate new wall, making sure its oriented properly by a switch statement
                     switch(direction){
-                        case Direction.WEST:
+                        case Direction.West:
                             pos.x += (float)wallSize / 2;
                             localScale.z = .1f;
                             break;
-                        case Direction.EAST:
+                        case Direction.East:
                             pos.x += (float)wallSize / 2;
                             pos.z += wallSize;
                             localScale.z = .1f;
                             break;
-                        case Direction.SOUTH:
+                        case Direction.South:
                             pos.z += (float)wallSize / 2;
                             pos.x += wallSize;
                             localScale.x = .1f;
                             break;
-                        case Direction.NORTH:
+                        case Direction.North:
                             pos.z += (float)wallSize / 2;
                             localScale.x = .1f;
                             break;
@@ -162,11 +162,11 @@ public class MazeLevelGeneration : MonoBehaviour
         {
             for (int col = 0; col < width; col++)
             {
-                if (grid[col,row] == Direction.NORTH) {
-                    gridObjectVer[col, row].active = false;
+                if (grid[col,row] == Direction.North) {
+                    gridObjectVer[col, row].SetActive(false);
                 }
-                if (grid[col, row] == Direction.WEST) {
-                    gridObjectHor[col, row].active = false;
+                if (grid[col, row] == Direction.West) {
+                    gridObjectHor[col, row].SetActive(false);
                 }
             }
         }
@@ -179,7 +179,7 @@ public class MazeLevelGeneration : MonoBehaviour
         {
             for (int col = 0; col < width; col++)
             {
-                var usableDirections = new List<Direction>{Direction.WEST, Direction.NORTH};
+                var usableDirections = new List<Direction>{Direction.West, Direction.North};
             
                 float randomNum = Random.Range(0, 100);
                 var index = randomNum > 50 ? 0 : 1;
@@ -187,10 +187,10 @@ public class MazeLevelGeneration : MonoBehaviour
 
                 var offset = new Vector2Int(0,0);
                 switch(direction){
-                    case Direction.NORTH:
+                    case Direction.North:
                         offset.y = 1;
                         break;
-                    case Direction.WEST:
+                    case Direction.West:
                         offset.x = 1;
                         break;
                     default:
@@ -201,17 +201,17 @@ public class MazeLevelGeneration : MonoBehaviour
                     direction = usableDirections[index];
                     offset = new(0,0);
                     switch(direction){
-                        case Direction.NORTH:
+                        case Direction.North:
                             offset.y = 1;
                             break;
-                        case Direction.WEST:
+                        case Direction.West:
                             offset.x = 1;
                             break;
                         default:
                             break;
                     }
                     if(offset.x+col >= width || offset.y+row >= height){
-                        direction = Direction.NONE;
+                        direction = Direction.None;
                     }
 
                 }
