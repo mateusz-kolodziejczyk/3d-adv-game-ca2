@@ -4,5 +4,23 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/splashscreen.unity
+    guid: 732a927cc47f81f40b600c7c1f1ee234
+  - enabled: 1
+    path: Assets/Scenes/SignLoginPage.unity
+    guid: d5975e750092d6048b57014241eeedb3
+  - enabled: 1
+    path: Assets/Scenes/BinaryTree.unity
+    guid: 8e389d1cd1cd449aebe26ef4ac271683
+  - enabled: 1
+    path: Assets/Scenes/Minecraft2.unity
+    guid: 86127a8f3b64f4f1db906278164a3049
+  - enabled: 1
+    path: Assets/Scenes/Planets.unity
+    guid: 1d8d82aaddc4d7c47ae2a7501b785b35
+  - enabled: 1
+    path: Assets/Scenes/endscreen.unity
+    guid: 904c54138f9063b49b78f3a4a80d049f
   m_configObjects: {}

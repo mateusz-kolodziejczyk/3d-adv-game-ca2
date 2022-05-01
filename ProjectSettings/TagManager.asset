@@ -6,6 +6,13 @@ TagManager:
   tags:
   - Ceiling
   - Floor
+  - Sun
+  - CollectableManager
+  - ScoreText
+  - ExitMenu
+  - Enemy
+  - Wall
+  - ContinueMenu
   layers:
   - Default
   - TransparentFX

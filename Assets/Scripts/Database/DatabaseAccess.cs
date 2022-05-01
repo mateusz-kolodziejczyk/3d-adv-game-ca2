@@ -1,9 +1,7 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
+using Util;
 
 public class DatabaseAccess : MonoBehaviour
 {
@@ -33,12 +31,17 @@ public class DatabaseAccess : MonoBehaviour
         
     }
 
-    public void SignupLogin(string username, string password)
+    public void Login(string username, string password)
     {
-        print("Attempting to sign up or login for username " + username);
-        StartCoroutine(SignupLoginRequest(username, password));
+        print("Attempting login for username " + username);
+        StartCoroutine(LoginRequest(username, password));
     }
 
+    public void SignUp(string username, string password)
+    {
+        print("Attempting to signup for username " + username);
+        StartCoroutine(SignUpRequest(username, password));
+    }
 
     IEnumerator PushRequest(string url)
     {
@@ -48,10 +51,9 @@ public class DatabaseAccess : MonoBehaviour
 
         yield return www.SendWebRequest();
     }
-
-    private IEnumerator SignupLoginRequest(string username, string password)
+    private IEnumerator SignUpRequest(string username, string password)
     {
-        var url = serverURL + $"user.php?name={username}&password={password}";
+        var url = serverURL + $"signup.php?name={username}&password={password}";
 
         var www = new UnityWebRequest(url);
         www.timeout = 5;
@@ -61,12 +63,92 @@ public class DatabaseAccess : MonoBehaviour
         switch (www.responseCode)
         {
             case 200:
-                gameController.UpdatePlayer(username);
-                gameController.AdvanceLevel();
+                gameController.SuccessfulSignup(username);
+                break;
+            default:
+                gameController.WrongUsername();
+                break;
+        }
+    }
+    private IEnumerator LoginRequest(string username, string password)
+    {
+        var url = serverURL + $"login.php?name={username}&password={password}";
+
+        var www = new UnityWebRequest(url);
+        www.timeout = 5;
+        yield return www.SendWebRequest();
+        if (www.result != UnityWebRequest.Result.Success) yield break;
+        
+        switch (www.responseCode)
+        {
+            case 200:
+                gameController.SuccessfulLogin(username);
                 break;
             default:
                 gameController.WrongPassword();
                 break;
         }
+    }
+
+    public void GetData(string username)
+    {
+
+    }
+    private IEnumerator GetDataRequest(string username)
+    {
+        var url = serverURL + $"data.php?name={username}";
+        var www = UnityWebRequest.Get(url);
+
+        www.timeout = 5;
+        yield return www.SendWebRequest();
+        if (www.result != UnityWebRequest.Result.Success) yield break;
+        switch (www.responseCode)
+        {
+            case 200:
+                var response = www.downloadHandler.text;
+                var data = JsonUtility.FromJson<ScoreLevelData>(response);
+                Debug.Log("Response" + response);
+                gameController.UpdatePlayerData(data);
+                gameController.LaunchContinueMenu();
+                break;
+            default:
+                break;
+        }
+    }
+    private IEnumerator UpdateDataRequest(string username, int score, int level, bool exitAfter = false)
+    {
+        var url = serverURL + $"data.php?name={username}&score={score}&level={level}";
+        var www = new UnityWebRequest(url);
+
+        www.method = "PATCH";
+
+        www.timeout = 5;
+        yield return www.SendWebRequest();
+        if (www.result != UnityWebRequest.Result.Success) yield break;
+            
+        switch (www.responseCode)
+        {
+            case 200:
+                Debug.Log("Successfuly updated data");
+                if (exitAfter)
+                {
+                    gameController.Quit();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void RequestData(string username)
+    {
+        print("Getting data for " + username);
+        StartCoroutine(GetDataRequest(username));
+    }
+
+    public void UpdatePlayerData(string username, int score, int level, bool exitAfter = false)
+    {
+        print("Updating data for " + username);
+        StartCoroutine(UpdateDataRequest(username, score, level, exitAfter));
     }
 }

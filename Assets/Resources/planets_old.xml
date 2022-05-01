@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<planets>
+	
+	<planet name = "Earth" diameter = "1" distancetoSun = "1" rotationPeriod = "1" orbitalVelocity = "1" > 
+	</planet>
+
+	<planet name = "Mercury" diameter = "0.3" distancetoSun = "0.4" rotationPeriod = "58.8" orbitalVelocity = "1.59"> </planet>
+
+	<planet name = "Venus" diameter = "0.95" distancetoSun = "0.72" rotationPeriod = "-244.0" orbitalVelocity = "1.18"> 
+	</planet>
+
+	<planet name = "Mars" diameter = "0.53" distancetoSun = "1.52" rotationPeriod = "1.03" orbitalVelocity = "1.88"> 
+	</planet>
+
+	<planet name = "Jupiter" diameter = "11.21" distancetoSun = "5.20" rotationPeriod = "0.42" orbitalVelocity = "0.44"> 
+	</planet>
+	
+	<planet name = "Saturn" diameter = "9.45" distancetoSun = "9.58" rotationPeriod = "0.45" orbitalVelocity = "0.33"> 
+	</planet>
+
+	<planet name = "Uranus" diameter = "4.01" distancetoSun = "19.20" rotationPeriod = "-0.72" orbitalVelocity = "0.23"> 
+	</planet>
+	
+	<planet name = "Neptune" diameter = "3.88" distancetoSun = "30.05" rotationPeriod = "0.67" orbitalVelocity = "0.18"> 
+	</planet>
+	
+	<planet name = "Pluto" diameter = "0.19" distancetoSun = "39.48" rotationPeriod = "6.41" orbitalVelocity = "0.16"> 
+	</planet>
+
+
+</planets>
